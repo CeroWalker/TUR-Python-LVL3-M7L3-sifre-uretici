@@ -2,79 +2,119 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Ultra Mega Havalı Oyun</title>
+  <title>Havalı Savaş Oyunu</title>
   <style>
     body {
       margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(270deg, #ff00ff, #00ffff, #ff9900);
-      background-size: 600% 600%;
-      animation: gradientShift 10s ease infinite;
-      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle, #111, #000);
       overflow: hidden;
-    }
-
-    @keyframes gradientShift {
-      0% {background-position: 0% 50%;}
-      50% {background-position: 100% 50%;}
-      100% {background-position: 0% 50%;}
-    }
-
-    #gameBox {
-      position: absolute;
-      width: 80px;
-      height: 80px;
-      background: #000;
-      border-radius: 15px;
-      box-shadow: 0 0 20px #00ffff, 0 0 40px #ff00ff;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    #gameBox:hover {
-      transform: scale(1.2);
-    }
-
-    #score {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      font-size: 2em;
+      font-family: 'Segoe UI', sans-serif;
       color: #fff;
-      text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+    }
+    #gameArea {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+    .player, .enemy {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+    }
+    .player {
+      background: cyan;
+      box-shadow: 0 0 20px cyan;
+    }
+    .enemy {
+      background: crimson;
+      box-shadow: 0 0 20px red;
+    }
+    #hud {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      font-size: 1.5em;
+      text-shadow: 0 0 10px #0ff;
     }
   </style>
 </head>
 <body>
-  <div id="score">Skor: 0</div>
-  <div id="gameBox"></div>
+  <div id="hud">Skor: 0 | Can: 5</div>
+  <div id="gameArea">
+    <div class="player" id="player"></div>
+    <div class="enemy" id="enemy"></div>
+  </div>
 
   <script>
-    const box = document.getElementById("gameBox");
-    const scoreDisplay = document.getElementById("score");
-    let score = 0;
+    const player = document.getElementById("player");
+    const enemy = document.getElementById("enemy");
+    const hud = document.getElementById("hud");
 
-    function moveBox() {
-      const x = Math.random() * (window.innerWidth - 100);
-      const y = Math.random() * (window.innerHeight - 100);
-      box.style.left = x + "px";
-      box.style.top = y + "px";
+    let score = 0;
+    let health = 5;
+    let playerX = 200, playerY = 200;
+    let enemyX = 600, enemyY = 300;
+
+    function updateHUD() {
+      hud.textContent = "Skor: " + score + " | Can: " + health;
     }
 
-    box.addEventListener("click", () => {
-      score++;
-      scoreDisplay.textContent = "Skor: " + score;
-      moveBox();
+    function render() {
+      player.style.left = playerX + "px";
+      player.style.top = playerY + "px";
+      enemy.style.left = enemyX + "px";
+      enemy.style.top = enemyY + "px";
+    }
+
+    function moveEnemy() {
+      const dx = playerX - enemyX;
+      const dy = playerY - enemyY;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist > 0) {
+        enemyX += dx / dist * 2;
+        enemyY += dy / dist * 2;
+      }
+    }
+
+    function checkCollision() {
+      if (Math.abs(playerX - enemyX) < 40 && Math.abs(playerY - enemyY) < 40) {
+        health--;
+        updateHUD();
+        enemyX = Math.random() * window.innerWidth;
+        enemyY = Math.random() * window.innerHeight;
+        if (health <= 0) {
+          alert("Oyun Bitti! Skor: " + score);
+          score = 0;
+          health = 5;
+          updateHUD();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowUp") playerY -= 20;
+      if (e.key === "ArrowDown") playerY += 20;
+      if (e.key === "ArrowLeft") playerX -= 20;
+      if (e.key === "ArrowRight") playerX += 20;
     });
 
-    // Başlangıçta kutuyu hareket ettir
-    moveBox();
+    enemy.addEventListener("click", () => {
+      score++;
+      updateHUD();
+      enemyX = Math.random() * window.innerWidth;
+      enemyY = Math.random() * window.innerHeight;
+    });
 
-    // Kutuyu her 2 saniyede bir otomatik hareket ettir
-    setInterval(moveBox, 2000);
+    function gameLoop() {
+      moveEnemy();
+      checkCollision();
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    updateHUD();
+    gameLoop();
   </script>
 </body>
 </html>
